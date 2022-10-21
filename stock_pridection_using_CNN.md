@@ -1,6 +1,8 @@
-# **Stock Buy/Sell Prediction Using Convolutional Neural Network**
+This page is scraped from web using github writer plugin. 
 
-**Copy from: https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3**
+Source: https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3
+
+# **Stock Buy/Sell Prediction Using Convolutional Neural Network**
 
 ## Inspired from Research Paper titled ‘Algorithmic Financial Trading with Deep Convolutional Neural Networks: Time Series to Image Conversion’
 
