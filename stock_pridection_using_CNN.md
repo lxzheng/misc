@@ -1,6 +1,8 @@
 This page is scraped from web using github writer plugin. 
 
-Source: https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3
+Source: [https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3](https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3)
+
+code:https://github.com/nayash/stock_cnn_blog_pub
 
 # **Stock Buy/Sell Prediction Using Convolutional Neural Network**
 
