@@ -1,15 +1,14 @@
 # Stock Buy Sell Prediction Using Convolutional Neural Network
+
 ![](https://github.com/lxzheng/misc/blob/main/images/10-24-2022,%2012-58-28/b210e688-d016-4039-a11e-e5b46824076d.png?raw=true)
 
-Inspired from Research Paper titled ‘Algorithmic Financial Trading with Deep Convolutional Neural Networks: Time Series to Image Conversion’
---------------------------------------------------------------------------------------------------------------------------------------------
+## Inspired from Research Paper titled ‘Algorithmic Financial Trading with Deep Convolutional Neural Networks: Time Series to Image Conversion’
 
 This project is loosely based on a research paper titled “[_Algorithmic Financial Trading with Deep Convolutional Neural Networks: Time Series to Image Conversion Approach_](https://www.researchgate.net/publication/324802031_Algorithmic_Financial_Trading_with_Deep_Convolutional_Neural_Networks_Time_Series_to_Image_Conversion_Approach)”. I say ‘loosely’ because although I have borrowed the core idea from the paper, there are some things that I have done (or had to do) different as we will see later. The link I have shared above is a preprint of the paper. The paid/main paper may have more details. This paper was suggested by one of the readers of my [previous article](https://towardsdatascience.com/predicting-stock-price-with-lstm-13af86a74944) on stock price prediction and it immediately caught my attention. **Here is the link to the Github** [**repo**](https://github.com/paranoiac-coder/stock_cnn_blog_pub) **and main training notebook on** [**Kaggle**](https://www.kaggle.com/darkknight91/predicting-stock-buy-sell-signal-using-cnn/).
 
 _There is one thing I would like the readers to know — I am not here to claim that I have a ready to use trading model (although I am exploring this method further for my personal use). The idea of converting a conventional tabular or time-series data to image, and training a classification model on it, just seemed too exciting to resist from trying it out and sharing it with the community. Like my_ [_previous article_](https://towardsdatascience.com/predicting-stock-price-with-lstm-13af86a74944) _this is an account of my experience with the project._
 
-1\. What does the research paper say?
--------------------------------------
+## 1\. What does the research paper say?
 
 In this section I will explain the idea presented in the paper. I will discuss the code and implementation in the next section.
 
@@ -45,8 +44,7 @@ At first glance, it may seem formidable, but all it says is this: use a window o
 
 **Computational Performance Evaluation:** Authors have provided two types of model evaluations in the paper, computational and financial evaluation. Computational evaluation includes confusion matrix, F1 score, class wise precision etc. Financial evaluation is done by applying the model prediction to real world trading and measure the profit made. I will only discuss the computational evaluation. Financial evaluation can be done by either real world trading or backtesting on held out data, which I may discuss in the future articles.
 
-2\. Implementation
-------------------
+## 2\. Implementation
 
 As mentioned at the beginning of this article, I have not followed the research paper strictly because it didn’t produce expected results. I will mention the differences as and when they come up. But with the changes I made the result was at par with the paper or better in some cases.
 
@@ -67,17 +65,155 @@ Data looks like this:
 
 **Labeling the data:** For this blog, I have used the original labeling algorithm that the authors have used. Here is a direct implementation of it:
 
+```
+def create_labels(self, df, col_name, window_size=11):
+        """
+        Data is labeled as per the logic in research paper
+        Label code : BUY => 1, SELL => 0, HOLD => 2
+        params :
+            df => Dataframe with data
+            col_name => name of column which should be used to determine strategy
+        returns : numpy array with integer codes for labels with
+                  size = total-(window_size)+1
+        """
+
+        self.log("creating label with original paper strategy")
+        row_counter = 0
+        total_rows = len(df)
+        labels = np.zeros(total_rows)
+        labels[:] = np.nan
+        print("Calculating labels")
+        pbar = tqdm(total=total_rows)
+
+        while row_counter < total_rows:
+            if row_counter >= window_size - 1:
+                window_begin = row_counter - (window_size - 1)
+                window_end = row_counter
+                window_middle = (window_begin + window_end) / 2
+
+                min_ = np.inf
+                min_index = -1
+                max_ = -np.inf
+                max_index = -1
+                for i in range(window_begin, window_end + 1):
+                    price = df.iloc[i][col_name]
+                    if price < min_:
+                        min_ = price
+                        min_index = i
+                    if price > max_:
+                        max_ = price
+                        max_index = i
+
+                if max_index == window_middle:
+                    labels[window_middle] = 0
+                elif min_index == window_middle:
+                    labels[window_middle] = 1
+                else:
+                    labels[window_middle] = 2
+
+            row_counter = row_counter + 1
+            pbar.update(1)
+
+        pbar.close()
+        return labels
+```
+
 The dataset looks like this after feature construction and labeling:
 
 ![](https://github.com/lxzheng/misc/blob/main/images/10-24-2022,%2012-58-28/da32deb7-ae9f-47c3-98f0-84a2c7b6dc7f.png?raw=true)
 
 **Normalization:** I used MinMaxScaler from Sklearn to normalize the data in the range of \[0, 1\], although the paper used \[-1, 1\] range (second deviation). This is just a personal preference.
 
+```
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from sklearn.model_selection import train_test_split
+from collections import Counter
+
+list_features = list(df.loc[:, 'open':'eom_26'].columns)
+print('Total number of features', len(list_features))
+x_train, x_test, y_train, y_test = train_test_split(df.loc[:, 'open':'eom_26'].values, df['labels'].values, train_size=0.8, 
+                                                    test_size=0.2, random_state=2, shuffle=True, stratify=df['labels'].values)
+
+if 0.7*x_train.shape[0] < 2500:
+    train_split = 0.8
+else:
+    train_split = 0.7
+
+print('train_split =',train_split)
+x_train, x_cv, y_train, y_cv = train_test_split(x_train, y_train, train_size=train_split, test_size=1-train_split, 
+                                                random_state=2, shuffle=True, stratify=y_train)
+mm_scaler = MinMaxScaler(feature_range=(0, 1)) # or StandardScaler?
+x_train = mm_scaler.fit_transform(x_train)
+x_cv = mm_scaler.transform(x_cv)
+x_test = mm_scaler.transform(x_test)
+
+print("Shape of x, y train/cv/test {} {} {} {} {} {}".format(x_train.shape, y_train.shape, x_cv.shape, y_cv.shape, x_test.shape, y_test.shape))
+```
+
 **Feature Selection:** After calculating these indicators, grouping them in the image based on their types (momentum, oscillator, etc), and training many CNN architectures, I realized the model just isn’t learning enough. Maybe the features weren’t good enough. So I decided to go with many other indicators without strictly following the rule of calculating them with different periods. Then I used feature selection technique to chose 225 high-quality features. In fact, I used two feature selection methods f\_classif and mutual\_info\_classif and chose the common features from both of their results. There is no mention of feature selection in the original paper, so third deviation.
+
+```
+from operator import itemgetter
+from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
+
+num_features = 225  # should be a perfect square
+selection_method = 'all'
+topk = 320 if selection_method == 'all' else num_features
+
+if selection_method == 'anova' or selection_method == 'all':
+    select_k_best = SelectKBest(f_classif, k=topk)
+    if selection_method != 'all':
+        x_train = select_k_best.fit_transform(x_main, y_train)
+        x_cv = select_k_best.transform(x_cv)
+        x_test = select_k_best.transform(x_test)
+    else:
+        select_k_best.fit(x_main, y_train)
+    
+    selected_features_anova = itemgetter(*select_k_best.get_support(indices=True))(list_features)
+    print(selected_features_anova)
+    print(select_k_best.get_support(indices=True))
+    print("****************************************")
+    
+if selection_method == 'mutual_info' or selection_method == 'all':
+    select_k_best = SelectKBest(mutual_info_classif, k=topk)
+    if selection_method != 'all':
+        x_train = select_k_best.fit_transform(x_main, y_train)
+        x_cv = select_k_best.transform(x_cv)
+        x_test = select_k_best.transform(x_test)
+    else:
+        select_k_best.fit(x_main, y_train)
+
+    selected_features_mic = itemgetter(*select_k_best.get_support(indices=True))(list_features)
+    print(len(selected_features_mic), selected_features_mic)
+    print(select_k_best.get_support(indices=True))
+    
+if selection_method == 'all':
+    common = list(set(selected_features_anova).intersection(selected_features_mic))
+    print("common selected featues", len(common), common)
+    if len(common) < num_features:
+        raise Exception('number of common features found {} < {} required features. Increase "topk variable"'.format(len(common), num_features))
+    feat_idx = []
+    for c in common:
+        feat_idx.append(list_features.index(c))
+    feat_idx = sorted(feat_idx[0:225])
+    print(feat_idx)  # x_train[:, feat_idx] will give you training data with desired features
+```
 
 At the end I am sorting indices list found intersection of both f\_classif and mutual\_info\_classif. This is to ensure that related features are in close proximity in the image, since I had appended similar type of indicators closely. Feature selection significantly improved the performance of the model.
 
 **Reshaping the data as image:** As of now we have a tabular data with 225 features. We need to convert it as images like this:
+
+```
+dim = int(np.sqrt(num_features))
+x_train = reshape_as_image(x_train, dim, dim)
+x_cv = reshape_as_image(x_cv, dim, dim)
+x_test = reshape_as_image(x_test, dim, dim)
+# adding a 1-dim for channels (3)
+x_train = np.stack((x_train,) * 3, axis=-1)
+x_test = np.stack((x_test,) * 3, axis=-1)
+x_cv = np.stack((x_cv,) * 3, axis=-1)
+print("final shape of x, y train/test {} {} {} {}".format(x_train.shape, y_train.shape, x_test.shape, y_test.shape))
+```
 
 This is what the images look like:
 
@@ -90,6 +226,28 @@ Training images
 ![](https://github.com/lxzheng/misc/blob/main/images/10-24-2022,%2012-58-28/cc13a0a4-d58b-4fdc-8729-bd5c0d57f209.png?raw=true)
 
 This is really less for model to learn anything significant. The paper mentions only “resampling” as a way of tackling this problem. I tried oversampling, synthetic data generation (SMOTE, ADASYN) but none of them gave any satisfactory result. Finally I settled for “sample weights”, wherein you tell the model to pay more attention to some samples (fourth deviation). This comes handy while dealing with class imbalance. Here is how you can calculate sample weight:
+
+```
+def get_sample_weights(self, y):
+        """
+        calculate the sample weights based on class weights. Used for models with
+        imbalanced data and one hot encoding prediction.
+        params:
+            y: class labels as integers
+        """
+
+        y = y.astype(int)  # compute_class_weight needs int labels
+        class_weights = compute_class_weight('balanced', np.unique(y), y)
+
+        print("real class weights are {}".format(class_weights), np.unique(y))
+        print("value_counts", np.unique(y, return_counts=True))
+        sample_weights = y.copy().astype(float)
+        for i in np.unique(y):
+            sample_weights[sample_weights == i] = class_weights[i]  # if i == 2 else 0.8 * class_weights[i]
+            # sample_weights = np.where(sample_weights == i, class_weights[int(i)], y_)
+
+        return sample_weights
+```
 
 This array of sample weights is then passed to Keras ‘fit’ function. You can also look into ‘class\_weights’ parameter.
 
@@ -119,16 +277,14 @@ If you notice, “hold” class scores are significantly worse that “buy/sell�
 
 > “However, a lot of false entry and exit points are also generated. This is mainly due to the fact that “Buy” and “Sell” points appear much less frequent than “Hold” points, it is not easy for the neural network to catch the “seldom” entry and exit points without jeopardizing the general distribution of the dominant “Hold” values. In other words, in order to be able to catch most of the “Buy” and “Sell” points (recall), the model has a trade-off by generating false alarms for non-existent entry and exit points (precision). Besides, Hold points are not as clear as “Buy” and “Sell” (hills and valleys). It is quite possible for the neural network to confuse some of the “Hold” points with “Buy” and “Sell” points, especially if they are close to the top of the hill or bottom of the valley on sliding windows.”
 
-3\. Further Improvements
-------------------------
+## 3\. Further Improvements
 
 *   There is definitely a lot of room for better network architecture and hyperparameter tuning.
 *   Using CNN with same architecture on other datasets didn’t give as impressive precision for buy and sell. But by playing around with hyperparameters we can definitely improve it to similar figures as Walmart.
 *   Although these results seem good enough, there is no guarantee that it would give you profits on real world trading because it would be limited by the strategy you choose to label your data. For example, I backtested above trading strategy (with original labels and not model predictions!) but I didn’t make much profit. But that depends on the labeling of the data. If someone uses a better strategy to label the training data, it may perform better.
 *   Exploring other technical indicators may further improve the result.
 
-4\. Conclusion
---------------
+## 4\. Conclusion
 
 I started working on this project with a very skeptical mind. I was not sure if the images would have enough information/patterns for the ConvNet to find. But since the results seem to be much better than random prediction, this approach seems promising. I especially loved the way they converted the time series problem to image classification.
 
