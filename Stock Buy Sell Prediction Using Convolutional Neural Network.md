@@ -305,3 +305,5 @@ if params\["conv2d\_layers"\]\['conv2d\_mp\_1'\] >= 0
 Do the same for “conv2d\_mp\_2” as well. There is nothing wrong with the model or program as such, it’s just that I had been exploring the hyperparameters search space without any MaxPools :-( . Need to explore if model can perform better with MaxPool layers.
 
 **UPDATE- 09/02/2020**: Added explanation for some of the more complicated technical indicators in “Feature Engineering” section.
+
+**Source**: https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3
