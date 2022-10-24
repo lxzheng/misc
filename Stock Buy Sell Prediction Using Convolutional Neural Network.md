@@ -306,4 +306,6 @@ Do the same for “conv2d\_mp\_2” as well. There is nothing wrong with the mod
 
 **UPDATE- 09/02/2020**: Added explanation for some of the more complicated technical indicators in “Feature Engineering” section.
 
-**Source**: https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3
+**Source**: [https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3](https://towardsdatascience.com/stock-market-action-prediction-with-convnet-8689238feae3)
+
+**Code**:[https://github.com/nayash/stock_cnn_blog_pub](https://github.com/nayash/stock_cnn_blog_pub)
