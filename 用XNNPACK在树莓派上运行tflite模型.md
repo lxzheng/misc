@@ -1,5 +1,4 @@
 # 用XNNPACK在树莓派上运行tflite模型
-# 用XNNPACK在树莓派上运行tflite模型
 
 1.  安装TensorFlow Lite：在树莓派上安装TensorFlow Lite可以通过运行以下命令实现：
 
