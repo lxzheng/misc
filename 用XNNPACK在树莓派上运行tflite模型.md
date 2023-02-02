@@ -7,7 +7,7 @@
    pip install tflite_runtime
    ```
 
-2.  加载TensorFlow Lite模型：您可以在您的代码中加载TensorFlow Lite模型，例如：
+2.  加载TensorFlow Lite模型：在代码中加载TensorFlow Lite模型，例如：
 
 
    ```
@@ -20,7 +20,7 @@ interpreter.allocate_tensors()
 input_tensor = interpreter.tensor(interpreter.get_input_details()[0]["index"])
 output_tensor = interpreter.tensor(interpreter.get_output_details()[0]["index"])
    ```
-3.  运行模型：您可以使用以下代码运行模型：
+3.  运行模型：可以使用以下代码运行模型：
 
    ```
 # Run inference
