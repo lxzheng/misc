@@ -1,6 +1,6 @@
 # TensorFlow Object Detection API configure file
 
-## centernet\_mobilenetv2\_fpn\_kpts配置文件
+## centernet\_mobilenetv2\_fpn\_kpts配置文件分析
 
 ```
 model {
@@ -38,6 +38,17 @@ model {
       max_box_predictions: 20
     }
 ```
+
+模型配置如下：
+
+1.  使用了CenterNet模型，类别数为1。
+2.  使用Mobilenet V2 FPN SEP Conv作为特征提取器。
+3.  图像重新调整的尺寸为512×512，且保持比例。
+4.  使用深度卷积（depthwise）。
+5.  设置了目标检测任务，其中定位损失使用L1定位损失。
+6.  设置了目标中心参数，其中分类损失使用Penalty Reduced Logistic Focal Loss，IoU阈值为0.7，最多预测20个盒子。
+7.  指定了关键点标签映射路径。
+8.  设置了关键点估计任务，任务名为“human\_pose”，其中定位损失使用L1定位损失，分类损失使用Penalty Reduced Logistic Focal Loss，指定了特定的关键点类名，并为每个关键点设置了标准偏差值。
 
 *   `model {...}`：定义模型的配置。
 *   `center_net {...}`：定义使用的网络架构（CenterNet）的配置。
@@ -85,8 +96,8 @@ keypoint_label_map_path: "PATH_TO_BE_CONFIGURED/label_map.txt"
       }
 ```
 
-*   `keypoint_label_map_path`：是文件的路径，包含了标签的映射关系，格式为 "标签名称: 标签编号"
-*   `keypoint_estimation_task`：描述了一个任务，即骨架关键点的估计。
+*   `keypoint_label_map_path`：是文件的路径，指向某个 label\_map.txt，应该在配置这个路径之前将它修改为合适的值。 label\_map.txt包含了标签的映射关系，格式为 "标签名称: 标签编号"
+*   `keypoint_estimation_task`：描述了一个任务，即骨架关键点的估计。这个部分定义了键点估计的任务，它包括任务的名称，任务的损失权重，损失函数的定义，键点的分类名称，键点标签到标准的映射，键点回归损失的权重，键点热图损失的权重，键点偏移损失的权重，偏移的峰值半径，是否为每个键点分别计算偏移等。
     *   `task_name`：任务的名称，为 "human\_pose"
     *   `task_loss_weight`：任务的损失权重，设置为 1.0
     *   `loss`：描述了任务的损失函数
@@ -139,12 +150,11 @@ train_config {
   }
 ```
 
-这是关于训练的配置参数，其中：
+这是关于训练的配置参数，这个部分定义了训练配置，包括批次大小，数据增强选项（随机水平翻转，随机裁剪，随机放缩，随机亮度，随机对比度），总训练步数，学习率调度策略等。其中：
 
 *   `batch_size` 表示每一批的样本数量
 *   `data_augmentation_options` 表示数据增强的选项，在这个例子中是随机水平翻转，并且列出了对关键点的顺序翻转。
-
-在随机水平翻转中，`keypoint_flip_permutation` 列出了在翻转图像时要进行交换的关键点的位置，以使得在翻转后关键点位置不变。在图像翻转时，根据配置中的 "keypoint\_flip\_permutation"，关键点位置是按照如下交换的：0 和 2、1 和 4、3 和 6、5 和 8、7 和 10、9 和 12、11 和 14、13 和 16、15。
+    *   `keypoint_flip_permutation` 列出了在翻转图像时要进行交换的关键点的位置，以使得在翻转后关键点位置不变。在图像翻转时，根据配置中的 "keypoint\_flip\_permutation"，关键点位置是按照如下顺序交换的：0 和 2、1 和 4、3 和 6、5 和 8、7 和 10、9 和 12、11 和 14、13 和 16、15。
 
 ```
   data_augmentation_options {
