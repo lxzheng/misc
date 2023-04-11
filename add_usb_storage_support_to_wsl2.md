@@ -40,8 +40,8 @@
    在windows中以管理员模式打开一个PowerShell，在c盘创建一个目录，例如kernel，将x86/boot/bzImage文件拷贝到该目录
 
    ```
-   $ mkdir kernel
-   $ cp \\wsl.localhost\Ubuntu-22.04\home\user\WSL2-Linux-Kernel-linux-msft-wsl-5.15.90.1\arch\x86\boot\bzImage C:\kernel\
+   mkdir c:\kernel
+   cp \\wsl.localhost\Ubuntu-22.04\home\user\WSL2-Linux-Kernel-linux-msft-wsl-5.15.90.1\arch\x86\boot\bzImage C:\kernel\
    ```
 
 6. 修改wsl配置
